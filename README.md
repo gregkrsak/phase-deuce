@@ -21,3 +21,5 @@ Each log file will be named according to "phase-deuce-log_YYYY-MM-DD.csv"
 One you have the application running, just press `SPACE` every time you want to simulate a customer coming in.
 
 When you're finished testing, press `Q` or `X` to exit.
+
+To view the output data, open the .CSV file with Microsoft Excel, LibreOffice Calc, or any text editor.
