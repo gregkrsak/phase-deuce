@@ -434,7 +434,7 @@ class PersonGenerator():
         # Calculate the length of the email domain list
         email_domains_len = len(PersonGenerator.__email_domains)
         # Choose a random email domain
-        email_domains_index = random.randrange(0, email_domains_len - 1)
+        email_domains_index = random.randrange(0, email_domains_len)
         domain_name = PersonGenerator.__email_domains[email_domains_index]
         # Format the email username
         if style == STYLE_FIRST_DOT_LAST:
