@@ -168,11 +168,12 @@ class Application(Controller):
 
         while the_user_still_wants_to_run_this_application:
             user_input = self.get_char()
-            # Did the user press a "whitespace" key (SPACE/TAB/ENTER/etc.)?
+            # Did the user press SPACEBAR?
             if user_input == ' ':
                 # Add a new row to the database
                 db_write_succeeded = self.model.create_row()
                 self.log.system(db_write_succeeded, 'Log entry written')
+            # Did the user press the Q or X key?
             elif user_input.upper() == 'Q' or user_input.upper() == 'X':
                 # Exit
                 the_user_still_wants_to_run_this_application = False
