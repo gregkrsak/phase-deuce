@@ -1,3 +1,15 @@
 # phase-deuce
 
-Automatically populates a random daily log of customers for businesses offering table service. Inspired by Phase 2 of WA State Governor Inslee's COVID-19 reopening plan. Of course, this is to be used for testing purposes only!
+Welcome to the daily log.
+
+# How do I use this?
+
+phase-deuce is a console application. That means you'll need to open a terminal window and execute it manually, from the command line.
+
+# What does it actually do?
+
+Every time you press the space bar, a .CSV formatted row of data is added to a "daily log" database file. The database files are named according to the current day.
+
+The columns of each daily log file are formatted as follows:
+
+unix_time,full_name,email_address,phone_number,checksum
