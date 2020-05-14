@@ -42,9 +42,6 @@ import sys
 import atexit
 # Required for time.time()
 import time
-# Required for checking keypresses
-import tty
-import termios
 # Required for random number generation
 import random
 # Required for regular expressions
@@ -138,6 +135,8 @@ class Application(Controller):
         """
         # Initialize the internal logger (unrelated to writing to .CSV files)
         self.log = Log(LOG_LEVEL_INFO)
+        # Determine the proper (OS-specific) function to get keypresses
+        self.getch = self._find_getch()
 
         result = True
         try:
@@ -167,7 +166,7 @@ class Application(Controller):
         self.log.info('Press SPACE to add a new log entry. Press Q or X to exit.')
 
         while the_user_still_wants_to_run_this_application:
-            user_input = self.get_char()
+            user_input = self.getch(self)
             # Did the user press SPACEBAR?
             if user_input == ' ':
                 # Add a new row to the database
@@ -193,19 +192,33 @@ class Application(Controller):
         self.log.system(result, 'Application shutdown')
         return
 
-    def get_char(self):
+
+    def _find_getch(self):
         """
-        Gets a single keypress
-        Ref: https://gist.github.com/jasonrdsouza/1901709
+        Determines the OS-specific function to return a keypress.
+        Ref: https://stackoverflow.com/questions/510357/python-read-a-single-character-from-the-user
         """
-        file_descriptor = self.input_stream.fileno()
-        old_settings = termios.tcgetattr(file_descriptor)
         try:
-            tty.setraw(self.input_stream.fileno())
-            result = sys.stdin.read(1)
-        finally:
-            termios.tcsetattr(file_descriptor, termios.TCSADRAIN, old_settings)
-        return result
+            import termios
+        except ImportError:
+            # Non-POSIX. Return msvcrt's (Windows') getch.
+            import msvcrt
+            return msvcrt.getch
+
+        # POSIX system. Create and return a getch that manipulates the tty.
+        import sys, tty
+
+        def _getch(self):
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+            try:
+                tty.setraw(fd)
+                ch = sys.stdin.read(1)
+            finally:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            return ch
+
+        return _getch
 
 
 class Database(Model):
