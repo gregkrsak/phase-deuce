@@ -14,16 +14,20 @@ phase-deuce is a console application. That means you'll need to open a terminal 
 - Download and extract files
 - Open terminal and navigate to the directory where you extracted the files
 - Run the following commands:
+
     __./configure__
+
     __make__
+
     __make install__
 - This will install Python at the default location */usr/local/bin* and its libraries at */usr/local/lib/pythonXX* where *XX* is the version of Python you installed
 - To Set Path:
-    In the csh shell − type *setenv PATH "$PATH:/usr/local/bin/python"* and press enter
 
-    In the bash shell (Linux) − type *export PATH="$PATH:/usr/local/bin/python"* and press enter
+    In the csh shell − type __setenv PATH "$PATH:/usr/local/bin/python"__ and press enter
 
-    In the sh or ksh shell − type *PATH="$PATH:/usr/local/bin/python"* and press enter
+    In the bash shell (Linux) − type __export PATH="$PATH:/usr/local/bin/python"__ and press enter
+
+    In the sh or ksh shell − type __PATH="$PATH:/usr/local/bin/python"__ and press enter
 
 ###### Mac OS
 - Recent Macs come with Python pre-installed, but it might be outdated
@@ -37,7 +41,7 @@ phase-deuce is a console application. That means you'll need to open a terminal 
 - Select and download *Windows x86-64 executable installer*
 - Run the downloaded file
 - This will bring up the Python wizard which will guide you throughout the installation
-- Check the box *Add Python XX to PATH*, which will add Python to your Windows PATH; so you can run Python from anywhere inside your file system
+- Check the box __Add Python XX to PATH__, which will add Python to your Windows PATH; so you can run Python from anywhere inside your file system
 - Accept all the default settings and wait until the installation is finished
 
 # What does phase-deuce actually do?
