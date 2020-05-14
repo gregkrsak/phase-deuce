@@ -14,4 +14,10 @@ The columns of each daily log file are formatted as follows:
 
     unix_time,full_name,email_address,phone_number,checksum
 
-Each log file will be named "phase-deuce-log_YYYY-MM-DD.csv"
+Each log file will be named according to "phase-deuce-log_YYYY-MM-DD.csv"
+
+# How do I use this again?
+
+One you have the application running, just press `SPACE` every time you want to simulate a customer coming in.
+
+When you're finished testing, press `Q` or `X` to exit.
