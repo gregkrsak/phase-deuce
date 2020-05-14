@@ -174,8 +174,6 @@ class Application(Controller):
             self.view = Screen()
             # Initialize the primary MVC model
             self.model = Database(self.log)
-            # Initialize the input stream
-            self.input_stream = sys.stdin
         except:
             # Was an exception thrown?
             result = False
