@@ -27,3 +27,5 @@ To view the output data, open the .CSV file with Microsoft Excel, LibreOffice Ca
 # Your code sucks. Can I make changes?
 
 Yes! Please fork the repo and submit a pull request. I'd appreciate it.
+
+Feel free to also submit a new issue if there's something you'd like me to address.
