@@ -64,7 +64,7 @@ OS_WINDOWS = 1
 OS_NON_WINDOWS = 2
 
 
-__OS = OS_NON_WINDOWS
+_OS = OS_NON_WINDOWS
 
 
 def init(argv):
@@ -85,7 +85,7 @@ def detect_os():
     try:
         import termios
     except ImportError:
-        __OS = OS_WINDOWS
+        _OS = OS_WINDOWS
     return;
 
 
@@ -94,10 +94,10 @@ def _find_getch():
     Determines the OS-specific function to return a keypress.
     Ref: https://stackoverflow.com/questions/510357/python-read-a-single-character-from-the-user
     """
-    if __OS == OS_NON_WINDOWS:
+    if _OS == OS_NON_WINDOWS:
         # POSIX
         import termios
-    elif __OS == OS_WINDOWS:
+    elif _OS == OS_WINDOWS:
         # Non-POSIX. Return msvcrt's (Windows') getch.
         import msvcrt
         return msvcrt.getch
