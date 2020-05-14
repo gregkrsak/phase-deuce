@@ -359,6 +359,8 @@ class Screen(View):
 
     def __init__(self):
         super().__init__(sys.stdout)
+        if detect_os() == OS_WINDOWS:
+            Screen.eol = '\r\n'
 
 
 class Log(Screen):
