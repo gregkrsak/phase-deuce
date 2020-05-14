@@ -464,15 +464,15 @@ class PersonGenerator():
         return result
 
     def __generate_npa():
-        result = random.randrange(0, 999)
+        result = random.randrange(0, 1000)
         return result
 
     def __generate_nxx():
-        result = random.randrange(0, 999)
+        result = random.randrange(0, 1000)
         return result
 
     def __generate_xxxx():
-        result = random.randrange(0, 9999)
+        result = random.randrange(0, 10000)
         return result
 
 
