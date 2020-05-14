@@ -6,6 +6,16 @@ Welcome to the daily log.
 
 phase-deuce is a console application, written in Python. That means you'll need to open a terminal window and execute it manually, from the command line. *If you don't have the Python language installed on your computer, you'll need to install it before this app will work.*
 
+# What does phase-deuce actually do?
+
+Every time you press the space bar, a .CSV formatted row of data is added to a "daily log" database file. The database files are named according to the current day.
+
+The rows of each daily log file are formatted with the following columns:
+
+    unix_time,full_name,email_address,phone_number,checksum
+
+Each log file will be named according to "phase-deuce-log_YYYY-MM-DD.csv"
+
 # I'm not sure if I can run Python apps. How do I install Python?
 
 ###### Windows
@@ -44,16 +54,6 @@ phase-deuce is a console application, written in Python. That means you'll need 
 
     In the sh or ksh shell, type `PATH="$PATH:/usr/local/bin/python"` and press `ENTER`
 
-# What does phase-deuce actually do?
-
-Every time you press the space bar, a .CSV formatted row of data is added to a "daily log" database file. The database files are named according to the current day.
-
-The rows of each daily log file are formatted with the following columns:
-
-    unix_time,full_name,email_address,phone_number,checksum
-
-Each log file will be named according to "phase-deuce-log_YYYY-MM-DD.csv"
-
 # How do I use this again?
 
 One you have the application running, just press `SPACE` every time you want to simulate a customer coming in.
@@ -62,7 +62,7 @@ When you're finished testing, press `Q`, `X`, or `CTRL-C` to exit.
 
 To view the output data, open the .CSV file with Microsoft Excel, LibreOffice Calc, or any text editor.
 
-(If you'd like to convert the UNIX timestamps to a friendlier datetime string, you can do a formula such as `=(A1/86400)+DATE(1970,1,1)` from within your spreadsheet, as shown [here](https://exceljet.net/formula/convert-unix-time-stamp-to-excel-date))
+(If you'd like to convert the UNIX timestamps to a friendlier datetime string, you can do a formula from within your spreadsheet, as shown [here](https://exceljet.net/formula/convert-unix-time-stamp-to-excel-date))
 
 # Your code sucks. Can I make changes?
 
