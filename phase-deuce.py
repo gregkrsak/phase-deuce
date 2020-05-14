@@ -64,9 +64,6 @@ OS_WINDOWS = 1
 OS_NON_WINDOWS = 2
 
 
-_OS = OS_WINDOWS
-
-
 def init(argv):
     """
     This is the code block that is run on startup.
@@ -82,12 +79,12 @@ def detect_os():
     """
     A rudamentary way to detect whether we are on Windows or a non-Windows operating system.
     """
+    result = OS_NON_WINDOWS
     try:
         import termios
-        _OS = OS_NON_WINDOWS
     except ImportError:
-        _OS = OS_WINDOWS
-    return
+        result = OS_WINDOWS
+    return result
 
 
 def _find_getch():
@@ -95,10 +92,10 @@ def _find_getch():
     Determines the OS-specific function to return a keypress.
     Ref: https://stackoverflow.com/questions/510357/python-read-a-single-character-from-the-user
     """
-    if _OS == OS_NON_WINDOWS:
+    if detect_os() == OS_NON_WINDOWS:
         # POSIX
         import termios
-    elif _OS == OS_WINDOWS:
+    else:
         # Non-POSIX. Return msvcrt's (Windows') getch.
         import msvcrt
         return msvcrt.getch
@@ -212,15 +209,18 @@ class Application(Controller):
         self.log.info('Press SPACE to add a new log entry. Press Q or X or CTRL-C to exit.')
 
         while the_user_still_wants_to_run_this_application:
-            # Get a keypress from the user. The str function is necessary here for cross-platform support.
-            user_input = str(self.getch(), 'utf-8')
+            # Get a keypress from the user.
+            if detect_os() == OS_NON_WINDOWS:
+                user_input = self.getch()
+            else:
+                user_input = str(self.getch(), 'utf-8')
             self.log.debug('self.getch() == ' + user_input)
             # Did the user press SPACEBAR?
             if user_input == ' ':
                 # Add a new row to the database
                 db_write_succeeded = self.model.create_row()
                 self.log.system(db_write_succeeded, 'Log entry written')
-            # Did the user press the Q or X key?
+            # Did the user press Q or X or CTRL-C?
             elif user_input.upper() == 'Q' or user_input.upper() == 'X' or user_input == '\x03':
                 # Exit
                 the_user_still_wants_to_run_this_application = False
