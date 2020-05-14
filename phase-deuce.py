@@ -133,20 +133,14 @@ class View:
     """
     An abstract MVC view.
     """
-    def __init__(self, output_stream):
-        self.buffer = io.StringIO()
-        self.output = output_stream
-
-    def waiting_output(self):
-        result = self.buffer.getvalue()
-        self.buffer.truncate(0)
-        return result
+    def __init__(self):
+        self.buffer = ''
 
     def update(self):
         """
         Flush the output buffer.
         """
-        self.output.write(self.waiting_output())
+        pass
 
 
 class Controller:
@@ -154,8 +148,8 @@ class Controller:
     An abstract MVC controller.
     """
     def __init__(self):
-        self.model = Model()
         self.view = View()
+        self.model = Model(self.view)
 
 
 ##########################################################################################
@@ -170,6 +164,7 @@ class Application(Controller):
     """
 
     def __init__(self):
+        super().__init__()
         atexit.register(self.shutdown)
         self.startup()
         pass
@@ -195,7 +190,10 @@ class Application(Controller):
             # Was an exception thrown?
             result = False
 
-        self.log.system(result, 'Application startup')
+        if detect_os() == OS_WINDOWS:
+            self.log.debug('Detected operating system: Windows')
+        else:
+            self.log.debug('Detected operating system: Linux/macOS')
         return
 
     def run(self):
@@ -214,12 +212,11 @@ class Application(Controller):
                 user_input = self.getch()
             else:
                 user_input = str(self.getch(), 'utf-8')
-            self.log.debug('self.getch() == ' + user_input)
             # Did the user press SPACEBAR?
             if user_input == ' ':
                 # Add a new row to the database
                 db_write_succeeded = self.model.create_row()
-                self.log.system(db_write_succeeded, 'Log entry written')
+                self.log.system(db_write_succeeded, 'Daily Log entry written')
             # Did the user press Q or X or CTRL-C?
             elif user_input.upper() == 'Q' or user_input.upper() == 'X' or user_input == '\x03':
                 # Exit
@@ -351,24 +348,18 @@ class Database(Model):
 
 
 class Screen(View):
-    """
-    Represents the stdout stream.
-    """
-
-    eol = '\n'
-
     def __init__(self):
-        super().__init__(sys.stdout)
-        if detect_os() == OS_WINDOWS:
-            Screen.eol = '\r\n'
+        super().__init__()
+
+    def update(self):
+        print(self.buffer)
+        self.buffer = ''
 
 
 class Log(Screen):
     """
     This class logs application events to the screen.
     """
-
-    eol = Screen.eol
 
     prefix_braces = ['[ ', ' ]']
     prefix_separator = '  '
@@ -382,6 +373,12 @@ class Log(Screen):
     def __init__(self, level):
         super().__init__()
         self.level = level
+        if detect_os() == OS_WINDOWS:
+            self.eol = '\r\n'
+            self.debug('EOL character is set to CRLF.')
+        else:
+            self.eol = '\n'
+            self.debug('EOL character is set to LF.')
 
     def system(self, status, message):
         if self.level <= LOG_LEVEL_SYSTEM:
@@ -407,8 +404,8 @@ class Log(Screen):
             self.__printlog(self.error_string, message)
 
     def __printlog(self, prefix_string, message):
-        self.buffer.write(self.prefix_braces[0] + prefix_string + self.prefix_braces[1] \
-                        + self.prefix_separator + message + Log.eol)
+        self.buffer += self.prefix_braces[0] + prefix_string + self.prefix_braces[1] \
+                        + self.prefix_separator + message
         self.update()
 
 
