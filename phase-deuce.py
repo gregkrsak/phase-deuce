@@ -59,6 +59,9 @@ LOG_LEVEL_NONE = 100
 ID_NAME = 0
 ID_EMAIL = 1
 ID_PHONE = 2
+# Constants used for Operating System detection
+OS_WINDOWS = 1
+OS_NON_WINDOWS = 2
 
 
 def init(argv):
@@ -66,9 +69,22 @@ def init(argv):
     This is the code block that is run on startup.
     :return: None
     """
+    detect_os()
     app = Application()
     app.run()
     return
+
+
+def detect_os():
+    """
+    A rudamentary way to detect whether we are on Windows or a non-Windows operating system.
+    """
+    result = OS_NON_WINDOWS
+    try:
+        import termios
+    except ImportError:
+        result = OS_WINDOWS
+    return result
 
 
 def _find_getch():
@@ -76,9 +92,10 @@ def _find_getch():
     Determines the OS-specific function to return a keypress.
     Ref: https://stackoverflow.com/questions/510357/python-read-a-single-character-from-the-user
     """
-    try:
+    if detect_os() == OS_NON_WINDOWS:
+        # POSIX
         import termios
-    except ImportError:
+    else:
         # Non-POSIX. Return msvcrt's (Windows') getch.
         import msvcrt
         return msvcrt.getch
@@ -116,20 +133,14 @@ class View:
     """
     An abstract MVC view.
     """
-    def __init__(self, output_stream):
-        self.buffer = io.StringIO()
-        self.output = output_stream
-
-    def waiting_output(self):
-        result = self.buffer.getvalue()
-        self.buffer.truncate(0)
-        return result
+    def __init__(self):
+        self.buffer = ''
 
     def update(self):
         """
         Flush the output buffer.
         """
-        self.output.write(self.waiting_output())
+        pass
 
 
 class Controller:
@@ -137,8 +148,8 @@ class Controller:
     An abstract MVC controller.
     """
     def __init__(self):
-        self.model = Model()
         self.view = View()
+        self.model = Model(self.view)
 
 
 ##########################################################################################
@@ -153,6 +164,7 @@ class Application(Controller):
     """
 
     def __init__(self):
+        super().__init__()
         atexit.register(self.shutdown)
         self.startup()
         pass
@@ -162,7 +174,7 @@ class Application(Controller):
         Performs tasks for the Application instance that should happen on startup.
         """
         # Initialize the internal logger (unrelated to writing to .CSV files)
-        self.log = Log(LOG_LEVEL_INFO)
+        self.log = Log(LOG_LEVEL_DEBUG)
         # Determine the proper (OS-specific) function to get keypresses
         self.getch = _find_getch()
 
@@ -178,7 +190,10 @@ class Application(Controller):
             # Was an exception thrown?
             result = False
 
-        self.log.system(result, 'Application startup')
+        if detect_os() == OS_WINDOWS:
+            self.log.debug('Detected operating system: Windows')
+        else:
+            self.log.debug('Detected operating system: Linux/macOS')
         return
 
     def run(self):
@@ -189,17 +204,21 @@ class Application(Controller):
         self.log.info('Welcome to phase-deuce')
         self.log.info('Written by Greg M. Krsak (greg.krsak@gmail.com)')
         self.log.info('Contribute or file bugs here: https://github.com/gregkrsak/phase-deuce')
-        self.log.info('Press SPACE to add a new log entry. Press Q or X to exit.')
+        self.log.info('Press SPACE to add a new log entry. Press Q or X or CTRL-C to exit.')
 
         while the_user_still_wants_to_run_this_application:
-            user_input = self.getch()
+            # Get a keypress from the user.
+            if detect_os() == OS_NON_WINDOWS:
+                user_input = self.getch()
+            else:
+                user_input = str(self.getch(), 'utf-8')
             # Did the user press SPACEBAR?
             if user_input == ' ':
                 # Add a new row to the database
                 db_write_succeeded = self.model.create_row()
-                self.log.system(db_write_succeeded, 'Log entry written')
-            # Did the user press the Q or X key?
-            elif user_input.upper() == 'Q' or user_input.upper() == 'X':
+                self.log.system(db_write_succeeded, 'Daily Log entry written')
+            # Did the user press Q or X or CTRL-C?
+            elif user_input.upper() == 'Q' or user_input.upper() == 'X' or user_input == '\x03':
                 # Exit
                 the_user_still_wants_to_run_this_application = False
 
@@ -329,22 +348,18 @@ class Database(Model):
 
 
 class Screen(View):
-    """
-    Represents the stdout stream.
-    """
-
-    eol = '\n'
-
     def __init__(self):
-        super().__init__(sys.stdout)
+        super().__init__()
+
+    def update(self):
+        print(self.buffer)
+        self.buffer = ''
 
 
 class Log(Screen):
     """
     This class logs application events to the screen.
     """
-
-    eol = Screen.eol
 
     prefix_braces = ['[ ', ' ]']
     prefix_separator = '  '
@@ -358,6 +373,12 @@ class Log(Screen):
     def __init__(self, level):
         super().__init__()
         self.level = level
+        if detect_os() == OS_WINDOWS:
+            self.eol = '\r\n'
+            self.debug('EOL character is set to CRLF.')
+        else:
+            self.eol = '\n'
+            self.debug('EOL character is set to LF.')
 
     def system(self, status, message):
         if self.level <= LOG_LEVEL_SYSTEM:
@@ -383,8 +404,8 @@ class Log(Screen):
             self.__printlog(self.error_string, message)
 
     def __printlog(self, prefix_string, message):
-        self.buffer.write(self.prefix_braces[0] + prefix_string + self.prefix_braces[1] \
-                        + self.prefix_separator + message + Log.eol)
+        self.buffer += self.prefix_braces[0] + prefix_string + self.prefix_braces[1] \
+                        + self.prefix_separator + message
         self.update()
 
 
