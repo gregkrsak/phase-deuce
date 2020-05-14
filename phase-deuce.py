@@ -28,8 +28,6 @@
 # SOFTWARE.
 
 
-# Required for io.StringIO()
-import io
 # Required for .CSV file operations
 import csv
 # Required for datetime.date()
@@ -69,7 +67,6 @@ def init(argv):
     This is the code block that is run on startup.
     :return: None
     """
-    detect_os()
     app = Application()
     app.run()
     return
@@ -175,11 +172,11 @@ class Application(Controller):
         """
         # Initialize the internal logger (unrelated to writing to .CSV files)
         self.log = Log(LOG_LEVEL_DEBUG)
-        # Determine the proper (OS-specific) function to get keypresses
-        self.getch = _find_getch()
 
         result = True
         try:
+            # Determine the proper (OS-specific) function to get keypresses
+            self.getch = _find_getch()
             # Initialize the random number generator
             random.seed()
             # Initialize the primary MVC view
@@ -189,6 +186,8 @@ class Application(Controller):
         except:
             # Was an exception thrown?
             result = False
+
+        self.log.system(result, 'Application startup')
 
         if detect_os() == OS_WINDOWS:
             self.log.debug('Detected operating system: Windows')
