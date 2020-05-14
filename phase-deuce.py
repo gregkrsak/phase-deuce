@@ -64,7 +64,7 @@ OS_WINDOWS = 1
 OS_NON_WINDOWS = 2
 
 
-_OS = OS_NON_WINDOWS
+_OS = OS_WINDOWS
 
 
 def init(argv):
@@ -84,6 +84,7 @@ def detect_os():
     """
     try:
         import termios
+        _OS = OS_NON_WINDOWS
     except ImportError:
         _OS = OS_WINDOWS
     return
@@ -208,10 +209,11 @@ class Application(Controller):
         self.log.info('Welcome to phase-deuce')
         self.log.info('Written by Greg M. Krsak (greg.krsak@gmail.com)')
         self.log.info('Contribute or file bugs here: https://github.com/gregkrsak/phase-deuce')
-        self.log.info('Press SPACE to add a new log entry. Press Q or X to exit.')
+        self.log.info('Press SPACE to add a new log entry. Press Q or X or CTRL-C to exit.')
 
         while the_user_still_wants_to_run_this_application:
-            user_input = self.getch()
+            # Get a keypress from the user. The str function is necessary here for cross-platform support.
+            user_input = str(self.getch(), 'utf-8')
             self.log.debug('self.getch() == ' + user_input)
             # Did the user press SPACEBAR?
             if user_input == ' ':
@@ -219,7 +221,7 @@ class Application(Controller):
                 db_write_succeeded = self.model.create_row()
                 self.log.system(db_write_succeeded, 'Log entry written')
             # Did the user press the Q or X key?
-            elif user_input.upper() == 'Q' or user_input.upper() == 'X':
+            elif user_input.upper() == 'Q' or user_input.upper() == 'X' or user_input == '\x03':
                 # Exit
                 the_user_still_wants_to_run_this_application = False
 
