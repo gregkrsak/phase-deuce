@@ -12,4 +12,6 @@ Every time you press the space bar, a .CSV formatted row of data is added to a "
 
 The columns of each daily log file are formatted as follows:
 
-unix_time,full_name,email_address,phone_number,checksum
+    unix_time,full_name,email_address,phone_number,checksum
+
+Each log file will be named "phase-deuce-log_YYYY-MM-DD.csv"
