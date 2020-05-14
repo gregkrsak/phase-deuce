@@ -59,6 +59,12 @@ LOG_LEVEL_NONE = 100
 ID_NAME = 0
 ID_EMAIL = 1
 ID_PHONE = 2
+# Constants used for Operating System detection
+OS_WINDOWS = 1
+OS_NON_WINDOWS = 2
+
+
+__OS = OS_NON_WINDOWS
 
 
 def init(argv):
@@ -66,9 +72,21 @@ def init(argv):
     This is the code block that is run on startup.
     :return: None
     """
+    detect_os()
     app = Application()
     app.run()
     return
+
+
+def detect_os():
+    """
+    A rudamentary way to detect whether we are on Windows or a non-Windows operating system.
+    """
+    try:
+        import termios
+    except ImportError:
+        __OS = OS_WINDOWS
+    return;
 
 
 def _find_getch():
@@ -76,9 +94,10 @@ def _find_getch():
     Determines the OS-specific function to return a keypress.
     Ref: https://stackoverflow.com/questions/510357/python-read-a-single-character-from-the-user
     """
-    try:
+    if __OS == OS_NON_WINDOWS:
+        # POSIX
         import termios
-    except ImportError:
+    elif __OS == OS_WINDOWS:
         # Non-POSIX. Return msvcrt's (Windows') getch.
         import msvcrt
         return msvcrt.getch
@@ -162,7 +181,7 @@ class Application(Controller):
         Performs tasks for the Application instance that should happen on startup.
         """
         # Initialize the internal logger (unrelated to writing to .CSV files)
-        self.log = Log(LOG_LEVEL_INFO)
+        self.log = Log(LOG_LEVEL_DEBUG)
         # Determine the proper (OS-specific) function to get keypresses
         self.getch = _find_getch()
 
@@ -193,6 +212,7 @@ class Application(Controller):
 
         while the_user_still_wants_to_run_this_application:
             user_input = self.getch()
+            self.log.debug('self.getch() == ' + user_input)
             # Did the user press SPACEBAR?
             if user_input == ' ':
                 # Add a new row to the database
