@@ -4,26 +4,27 @@ Welcome to the daily log.
 
 # How do I use this?
 
-phase-deuce is a console application, written in Python. That means you'll need to open a terminal window and execute it manually, from the command line.
+phase-deuce is a console application, written in Python. That means you'll need to open a terminal window and execute it manually, from the command line. *If you don't have the Python language installed on your computer, you'll need to install it before this app will work.*
 
-If you don't have the Python language installed on your computer, you'll need to install it before this app will work.
-
-# You said I need Python. How do I install Python?
+# I'm not sure if I can run Python apps. How do I install Python?
 
 ###### Windows
+- First of all, try to install Python from the Windows Store. If you're unable to do this, keep reading...
 - Go to [Python Releases for Windows](https://www.python.org/downloads/windows/)
-- Select and download *Windows x86-64 executable installer*
+- Under *Stable Releases*, select and download the most recent *Windows x86-64 executable installer*
 - Run the downloaded file
 - This will bring up the Python wizard which will guide you throughout the installation
-- Check the box __Add Python XX to PATH__, which will add Python to your Windows PATH; so you can run Python from anywhere inside your file system
-- Accept all the default settings and wait until the installation is finished
+- Choose *Customize installation*
+- Check the box *Add Python to environment variables*, so you can run Python from any folder
+- Accept the remaining settings and wait until the installation is finished
 
 ###### macOS
-- Recent Macs come with Python pre-installed, but it might be outdated! Oh no!
+- Recent Macs come with Python pre-installed, but it *might* be outdated! (Oh no!)
 - Checking the latest releases and related instructions might be a good idea, so [click here](https://www.python.org/downloads/mac-osx/)
 - The macOS installer *should* automatically handle your path settings
 
 ###### Unix and Linux
+- First of all, try to install Python using your package manager. If you're unable to do this, keep reading...
 - Open a web browser and head over to [Python Source Releases](https://www.python.org/downloads/source/)
 - Download the latest zipped source code available for Unix/Linux
 - Download and extract files
