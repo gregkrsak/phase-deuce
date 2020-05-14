@@ -23,3 +23,7 @@ One you have the application running, just press `SPACE` every time you want to 
 When you're finished testing, press `Q` or `X` to exit.
 
 To view the output data, open the .CSV file with Microsoft Excel, LibreOffice Calc, or any text editor.
+
+# Your code sucks. Can I make changes?
+
+Yes! Please fork the repo and submit a pull request. I'd appreciate it.
