@@ -86,7 +86,7 @@ def detect_os():
         import termios
     except ImportError:
         _OS = OS_WINDOWS
-    return;
+    return
 
 
 def _find_getch():
