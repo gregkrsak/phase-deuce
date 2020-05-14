@@ -373,12 +373,6 @@ class Log(Screen):
     def __init__(self, level):
         super().__init__()
         self.level = level
-        if detect_os() == OS_WINDOWS:
-            self.eol = '\r\n'
-            self.debug('EOL character is set to CRLF.')
-        else:
-            self.eol = '\n'
-            self.debug('EOL character is set to LF.')
 
     def system(self, status, message):
         if self.level <= LOG_LEVEL_SYSTEM:
