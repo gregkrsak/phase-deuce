@@ -492,6 +492,7 @@ class PersonGenerator():
         return result
 
     def __generate_phone_number():
+        # Have a problem? Use a regular expression. Now you have two problems!
         # This regex validates a 10-digit telephone number
         # Ref: https://www.oreilly.com/library/view/regular-expressions-cookbook/9781449327453/ch04s02.html
         nanp_regex = re.compile('^\(?([2-9][0-8][0-9])\)?[-.]?([2-9][0-9]{2})[-.]?([0-9]{4})$')
