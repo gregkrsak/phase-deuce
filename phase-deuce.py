@@ -46,20 +46,32 @@ import random
 import re
 
 
-# Constants used for logging
+##########################################################################################
+## Constants                                                                            ##
+##########################################################################################
+
+
+# Used for logging
 LOG_LEVEL_DEBUG = 1
 LOG_LEVEL_INFO = 2
 LOG_LEVEL_WARN = 3
 LOG_LEVEL_ERROR = 4
 LOG_LEVEL_SYSTEM = 5
 LOG_LEVEL_NONE = 100
-# Constants used for identity indexing
+
+# Used for identity indexing
 ID_NAME = 0
 ID_EMAIL = 1
 ID_PHONE = 2
-# Constants used for Operating System detection
+
+# Used for Operating System detection
 OS_WINDOWS = 1
 OS_NON_WINDOWS = 2
+
+
+##########################################################################################
+## Functions                                                                            ##
+##########################################################################################
 
 
 def init(argv):
@@ -400,6 +412,11 @@ class Log(Screen):
         self.buffer += self.prefix_braces[0] + prefix_string + self.prefix_braces[1] \
                         + self.prefix_separator + message
         self.update()
+
+
+##########################################################################################
+## Static Classes                                                                       ##
+##########################################################################################
 
 
 class PersonGenerator():
