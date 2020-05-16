@@ -46,16 +46,14 @@ import random
 import re
 # Required for the main command line argument parser
 import argparse
+# Required for exit codes
+import os
 
 
 ##########################################################################################
 ## Constants                                                                            ##
 ##########################################################################################
 
-
-# Program exit codes
-EXIT_SUCCESS = 0
-EXIT_FAILURE = 1
 
 # Used for logging
 LOG_LEVEL_DEBUG = 1
@@ -238,14 +236,14 @@ class Application(Controller):
             # This exception is thrown by the argument parser
             result = False
             self.log.debug(EXCEPTION_SYSTEMEXIT_MSG)
-            # Exit with a failure code
-            sys.exit(EXIT_FAILURE)
+            # Hard exit with a failure code. Note that this will bypass Application.shutdown()
+            os._exit(os.EX_USAGE)
         except ValueError as e:
             # This exception is thrown by Application.validate_args()
             result = False
             self.log.error(str(e))
             # Exit with a failure code
-            sys.exit(EXIT_FAILURE)
+            sys.exit(os.EX_USAGE)
         except:
             # Catch any other exception and do not raise
             result = False
@@ -286,7 +284,7 @@ class Application(Controller):
                 # Exit
                 the_user_still_wants_to_run_this_application = False
 
-        return EXIT_SUCCESS
+        return os.EX_OK
 
     def shutdown(self):
         """
