@@ -28,8 +28,6 @@
 # SOFTWARE.
 
 
-# Required for io.StringIO()
-import io
 # Required for .CSV file operations
 import csv
 # Required for datetime.date()
@@ -48,20 +46,32 @@ import random
 import re
 
 
-# Constants used for logging
+##########################################################################################
+## Constants                                                                            ##
+##########################################################################################
+
+
+# Used for logging
 LOG_LEVEL_DEBUG = 1
 LOG_LEVEL_INFO = 2
 LOG_LEVEL_WARN = 3
 LOG_LEVEL_ERROR = 4
 LOG_LEVEL_SYSTEM = 5
 LOG_LEVEL_NONE = 100
-# Constants used for identity indexing
+
+# Used for identity indexing
 ID_NAME = 0
 ID_EMAIL = 1
 ID_PHONE = 2
-# Constants used for Operating System detection
+
+# Used for Operating System detection
 OS_WINDOWS = 1
 OS_NON_WINDOWS = 2
+
+
+##########################################################################################
+## Functions                                                                            ##
+##########################################################################################
 
 
 def init(argv):
@@ -69,7 +79,6 @@ def init(argv):
     This is the code block that is run on startup.
     :return: None
     """
-    detect_os()
     app = Application()
     app.run()
     return
@@ -175,11 +184,11 @@ class Application(Controller):
         """
         # Initialize the internal logger (unrelated to writing to .CSV files)
         self.log = Log(LOG_LEVEL_DEBUG)
-        # Determine the proper (OS-specific) function to get keypresses
-        self.getch = _find_getch()
 
         result = True
         try:
+            # Determine the proper (OS-specific) function to get keypresses
+            self.getch = _find_getch()
             # Initialize the random number generator
             random.seed()
             # Initialize the primary MVC view
@@ -189,6 +198,8 @@ class Application(Controller):
         except:
             # Was an exception thrown?
             result = False
+
+        self.log.system(result, 'Application startup')
 
         if detect_os() == OS_WINDOWS:
             self.log.debug('Detected operating system: Windows')
@@ -403,6 +414,11 @@ class Log(Screen):
         self.update()
 
 
+##########################################################################################
+## Static Classes                                                                       ##
+##########################################################################################
+
+
 class PersonGenerator():
     """
     This is a static class used to generate pseudo-random "personal info".
@@ -476,6 +492,7 @@ class PersonGenerator():
         return result
 
     def __generate_phone_number():
+        # Have a problem? Use a regular expression. Now you have two problems!
         # This regex validates a 10-digit telephone number
         # Ref: https://www.oreilly.com/library/view/regular-expressions-cookbook/9781449327453/ch04s02.html
         nanp_regex = re.compile('^\(?([2-9][0-8][0-9])\)?[-.]?([2-9][0-9]{2})[-.]?([0-9]{4})$')
