@@ -34,7 +34,7 @@ import csv
 import datetime
 # Required for zlib.adler32()
 import zlib
-# Required for standard input/output routines
+# Required for sys.argv, keyboard input, sys.exc_info(), sys.exit()
 import sys
 # Required for atexit.register()
 import atexit
@@ -44,12 +44,18 @@ import time
 import random
 # Required for regular expressions
 import re
+# Required for the main command line argument parser
+import argparse
 
 
 ##########################################################################################
 ## Constants                                                                            ##
 ##########################################################################################
 
+
+# Program exit codes
+EXIT_SUCCESS = 0
+EXIT_FAILURE = 1
 
 # Used for logging
 LOG_LEVEL_DEBUG = 1
@@ -68,6 +74,27 @@ ID_PHONE = 2
 OS_WINDOWS = 1
 OS_NON_WINDOWS = 2
 
+# SSOT for the web URL
+WEB_URL = 'https://github.com/gregkrsak/phase-deuce'
+
+# Used for the welcome banner
+WELCOME_BANNER_LINE1 = 'Welcome to phase-deuce'
+WELCOME_BANNER_LINE2 = 'Written by Greg M. Krsak (greg.krsak@gmail.com)'
+WELCOME_BANNER_LINE3 = 'Contribute or file bugs here: {0}'.format(WEB_URL)
+WELCOME_BANNER_LINE4 = 'Press SPACE to add a new log entry. Press Q or X or CTRL-C to exit.'
+
+# Used for -h or --help arguments
+ARG_HELP_DESCRIPTION =  'Welcome to the daily log. {0}'.format(WEB_URL)
+# Used for -d or --date arguments
+ARG_DATE_SHORT = '-d'
+ARG_DATE_LONG = '--date'
+ARG_DATE_DESCRIPTION = 'Today\'s date in ISO 8601 format (YYYY-MM-DD)'
+
+# Used for exception handling
+EXCEPTION_GENERAL_MSG = 'Caught exception in {1}: {0}'
+EXCEPTION_SYSTEMEXIT_MSG = 'Exiting early (probably because of command line options)'
+EXCEPTION_DATE_INVALID_MSG = 'Date argument is invalid (Should be YYYY-MM-DD)'
+
 
 ##########################################################################################
 ## Functions                                                                            ##
@@ -80,8 +107,8 @@ def init(argv):
     :return: None
     """
     app = Application()
-    app.run()
-    return
+    exit_code = app.run()
+    sys.exit(exit_code)
 
 
 def detect_os():
@@ -174,7 +201,6 @@ class Application(Controller):
 
     def __init__(self):
         super().__init__()
-        atexit.register(self.shutdown)
         self.startup()
         pass
 
@@ -187,6 +213,17 @@ class Application(Controller):
 
         result = True
         try:
+            # Create the parser object for command line arguments
+            parser = argparse.ArgumentParser(description=ARG_HELP_DESCRIPTION)
+            # Define the -d or --date argument
+            parser.add_argument(ARG_DATE_SHORT,
+                                ARG_DATE_LONG,
+                                help=ARG_DATE_DESCRIPTION,
+                                required=False)
+            # Execute the argument parser (this will cause a SystemExit exception on -h or --help)
+            self.args = parser.parse_args()
+            # Register the shutdown function
+            atexit.register(self.shutdown)
             # Determine the proper (OS-specific) function to get keypresses
             self.getch = _find_getch()
             # Initialize the random number generator
@@ -194,12 +231,28 @@ class Application(Controller):
             # Initialize the primary MVC view
             self.view = Screen()
             # Initialize the primary MVC model
-            self.model = Database(self.log)
-        except:
-            # Was an exception thrown?
+            self.model = Database(self.log, self.args)
+            # Validate the command line arguments
+            self.validate_args()
+        except SystemExit:
+            # This exception is thrown by the argument parser
             result = False
-
-        self.log.system(result, 'Application startup')
+            self.log.debug(EXCEPTION_SYSTEMEXIT_MSG)
+            # Exit with a failure code
+            sys.exit(EXIT_FAILURE)
+        except ValueError as e:
+            # This exception is thrown by Application.validate_args()
+            result = False
+            self.log.error(str(e))
+            # Exit with a failure code
+            sys.exit(EXIT_FAILURE)
+        except:
+            # Catch any other exception and do not raise
+            result = False
+            e = sys.exc_info()[0]
+            self.log.error(EXCEPTION_GENERAL_MSG.format(e, 'Application.startup()'))
+        finally:
+            self.log.system(result, 'Application startup')
 
         if detect_os() == OS_WINDOWS:
             self.log.debug('Detected operating system: Windows')
@@ -212,10 +265,10 @@ class Application(Controller):
         Runs the Application instance.
         """
         the_user_still_wants_to_run_this_application = True
-        self.log.info('Welcome to phase-deuce')
-        self.log.info('Written by Greg M. Krsak (greg.krsak@gmail.com)')
-        self.log.info('Contribute or file bugs here: https://github.com/gregkrsak/phase-deuce')
-        self.log.info('Press SPACE to add a new log entry. Press Q or X or CTRL-C to exit.')
+        self.log.info(WELCOME_BANNER_LINE1)
+        self.log.info(WELCOME_BANNER_LINE2)
+        self.log.info(WELCOME_BANNER_LINE3)
+        self.log.info(WELCOME_BANNER_LINE4)
 
         while the_user_still_wants_to_run_this_application:
             # Get a keypress from the user.
@@ -233,7 +286,7 @@ class Application(Controller):
                 # Exit
                 the_user_still_wants_to_run_this_application = False
 
-        return
+        return EXIT_SUCCESS
 
     def shutdown(self):
         """
@@ -247,6 +300,19 @@ class Application(Controller):
             result = False
         self.log.system(result, 'Application shutdown')
         return
+
+    def validate_args(self):
+        """
+        Validates the command line arguments. Raises an exception on failure.
+        :raises: ValueError: A command line argument is invalid
+        """
+        # Have a problem? Use a regular expression. Now you have two problems!
+        # This regex validates an ISO 8601 date with the format YYYY-MM-DD
+        # Ref: https://stackoverflow.com/questions/22061723/regex-date-validation-for-yyyy-mm-dd
+        date_regex = re.compile('^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$')
+        if self.args.date:
+            if not date_regex.match(self.args.date):
+                raise ValueError(EXCEPTION_DATE_INVALID_MSG)
 
 
 class Database(Model):
@@ -271,15 +337,20 @@ class Database(Model):
     column_phone_number = 3
     column_checksum = 4
 
-    def __init__(self, log):
+    def __init__(self, log, command_line_args):
         super().__init__(log)
+        self.command_line_args = command_line_args
 
     def todays_filename(self):
         """
         Calculates today's filename string using the ISO 8601 format date.
         :return: A string with the format "phase-deuce-log_YYYY-MM-DD.csv".
         """
-        date_string = datetime.date.today().isoformat()
+        # Check to see if a date was provided in the command line arguments
+        if not self.command_line_args.date:
+            date_string = datetime.date.today().isoformat()
+        else:
+            date_string = self.command_line_args.date
         result = Database.filename_prefix + date_string + Database.filename_suffix
         return result
 
@@ -318,6 +389,8 @@ class Database(Model):
         except:
             # Was an exception thrown?
             result = False
+            e = sys.exc_info()[0]
+            self.log.error(EXCEPTION_GENERAL_MSG.format(e, 'Database.validate()'))
         return result
 
 
@@ -355,6 +428,8 @@ class Database(Model):
         except:
             # Was an exception thrown?
             result = False
+            e = sys.exc_info()[0]
+            self.log.error(EXCEPTION_GENERAL_MSG.format(e, 'Database.create_row()'))
         return result
 
 
