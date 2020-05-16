@@ -46,7 +46,7 @@ import random
 import re
 # Required for the main command line argument parser
 import argparse
-# Required for exit codes
+# Required for os._exit()
 import os
 
 
@@ -54,6 +54,11 @@ import os
 ## Constants                                                                            ##
 ##########################################################################################
 
+
+# Program exit codes (os.EX_OK, etc. are not cross-platform)
+EXIT_SUCCESS = 0
+EXIT_FAILURE_GENERAL = 1
+EXIT_FAILURE_USAGE = 2
 
 # Used for logging
 LOG_LEVEL_DEBUG = 1
@@ -237,13 +242,13 @@ class Application(Controller):
             result = False
             self.log.debug(EXCEPTION_SYSTEMEXIT_MSG)
             # Hard exit with a failure code. Note that this will bypass Application.shutdown()
-            os._exit(os.EX_USAGE)
+            os._exit(EXIT_FAILURE_USAGE)
         except ValueError as e:
             # This exception is thrown by Application.validate_args()
             result = False
             self.log.error(str(e))
             # Exit with a failure code
-            sys.exit(os.EX_USAGE)
+            sys.exit(EXIT_FAILURE_USAGE)
         except:
             # Catch any other exception and do not raise
             result = False
@@ -284,7 +289,7 @@ class Application(Controller):
                 # Exit
                 the_user_still_wants_to_run_this_application = False
 
-        return os.EX_OK
+        return EXIT_SUCCESS
 
     def shutdown(self):
         """
