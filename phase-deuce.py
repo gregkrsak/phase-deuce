@@ -209,7 +209,7 @@ class Application(Controller):
         Performs tasks for the Application instance that should happen on startup.
         """
         # Initialize the internal logger (unrelated to writing to .CSV files)
-        self.log = Log(LOG_LEVEL_DEBUG) #FIXME - Return to LOG_LEVEL_INFO before commit to staging
+        self.log = Log(LOG_LEVEL_INFO)
 
         result = True
         try:
