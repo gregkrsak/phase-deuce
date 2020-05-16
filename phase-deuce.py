@@ -68,6 +68,29 @@ LOG_LEVEL_ERROR = 4
 LOG_LEVEL_SYSTEM = 5
 LOG_LEVEL_NONE = 100
 
+# Used for database error tracking
+DB_RESULT_OK = 0
+DB_RESULT_GENERAL_FAILURE = 1
+DB_RESULT_BAD_CHECKSUM = 2
+DB_RESULT_CORRUPT_FILE = 3
+DB_RESULT_NO_PERMISSION = 4
+WARNING_DB_VALIDATION = 'Could not validate all database row checksums in {0}'
+WARNING_DB_CORRUPTION = 'Significant corruption in {0} -- Attempting to write anyway'
+ERROR_DB_PERMISSION = 'You do not have permission to access {0}'
+
+# Used for keypress handling
+KEY_SPACE = ' '
+KEY_Q = 'Q'
+KEY_X = 'X'
+KEY_CTRL_C = '\x03'
+
+# Standard log messages during the course of execution
+APP_STARTUP_MSG = 'Application startup'
+APP_SHUTDOWN_MSG = 'Application shutdown'
+LOG_ENTRY_MSG = 'Daily Log entry written'
+OS_DETECT_POSIX_MSG = 'Detected operating system: Linux/macOS'
+OS_DETECT_NONPOSIX_MSG = 'Detected operating system: Windows'
+
 # Used for identity indexing
 ID_NAME = 0
 ID_EMAIL = 1
@@ -91,12 +114,20 @@ ARG_HELP_DESCRIPTION =  'Welcome to the daily log. {0}'.format(WEB_URL)
 # Used for -d or --date arguments
 ARG_DATE_SHORT = '-d'
 ARG_DATE_LONG = '--date'
-ARG_DATE_DESCRIPTION = 'Today\'s date in ISO 8601 format (YYYY-MM-DD)'
+ARG_DATE_DESCRIPTION = 'The desired logfile date in ISO 8601 format (YYYY-MM-DD)'
 
 # Used for exception handling
 EXCEPTION_GENERAL_MSG = 'Caught exception in {1}: {0}'
 EXCEPTION_SYSTEMEXIT_MSG = 'Exiting early (probably because of command line options)'
 EXCEPTION_DATE_INVALID_MSG = 'Date argument is invalid (Should be YYYY-MM-DD)'
+
+# Have a problem? Use a regular expression. Now you have two problems!
+# This regex validates an ISO 8601 date with the format YYYY-MM-DD
+# Ref: https://stackoverflow.com/questions/22061723/regex-date-validation-for-yyyy-mm-dd
+REGEX_ISO8601_DATEONLY = '^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$'
+# This regex validates a 10-digit NANP telephone number with the format NPA-NXX-XXXX
+# Ref: https://www.oreilly.com/library/view/regular-expressions-cookbook/9781449327453/ch04s02.html
+REGEX_PHONE_US10DIGIT = '^\(?([2-9][0-8][0-9])\)?[-.]?([2-9][0-9]{2})[-.]?([0-9]{4})$'
 
 
 ##########################################################################################
@@ -212,7 +243,7 @@ class Application(Controller):
         Performs tasks for the Application instance that should happen on startup.
         """
         # Initialize the internal logger (unrelated to writing to .CSV files)
-        self.log = Log(LOG_LEVEL_INFO)
+        self.log = Log(LOG_LEVEL_DEBUG) #FIXME - change this back
 
         result = True
         try:
@@ -255,12 +286,12 @@ class Application(Controller):
             e = sys.exc_info()[0]
             self.log.error(EXCEPTION_GENERAL_MSG.format(e, 'Application.startup()'))
         finally:
-            self.log.system(result, 'Application startup')
+            self.log.system(result, APP_STARTUP_MSG)
 
         if detect_os() == OS_WINDOWS:
-            self.log.debug('Detected operating system: Windows')
+            self.log.debug(OS_DETECT_NONPOSIX_MSG)
         else:
-            self.log.debug('Detected operating system: Linux/macOS')
+            self.log.debug(OS_DETECT_POSIX_MSG)
         return
 
     def run(self):
@@ -279,14 +310,25 @@ class Application(Controller):
                 user_input = self.getch()
             else:
                 user_input = str(self.getch(), 'utf-8')
-            # Did the user press SPACEBAR?
-            if user_input == ' ':
+            # Did the user press SPACE?
+            if user_input == KEY_SPACE:
                 # Add a new row to the database
-                db_write_succeeded = self.model.create_row()
-                self.log.system(db_write_succeeded, 'Daily Log entry written')
+                db_result = DB_RESULT_OK
+                write_succeeded = True
+                db_result = self.model.create_row()
+                # Only report a failed write if the Database object reports an unhandled exception
+                # was thrown, or the user does not have the proper permissions. A checksum
+                # validation failure will display a warning, but will probably not cause a failure
+                # in the actual "append" mode write operation. The same goes for files with other
+                # corruption issues (missing columns from one or more rows, etc.).
+                if db_result == DB_RESULT_GENERAL_FAILURE or db_result == DB_RESULT_NO_PERMISSION:
+                    write_succeeded = False
+                self.log.system(write_succeeded, LOG_ENTRY_MSG)
             # Did the user press Q or X or CTRL-C?
-            elif user_input.upper() == 'Q' or user_input.upper() == 'X' or user_input == '\x03':
-                # Exit
+            elif user_input.upper() == KEY_Q \
+                or user_input.upper() == KEY_X \
+                or user_input == KEY_CTRL_C:
+                # Application will exit
                 the_user_still_wants_to_run_this_application = False
 
         return EXIT_SUCCESS
@@ -301,7 +343,7 @@ class Application(Controller):
         except:
             # Was an exception thrown?
             result = False
-        self.log.system(result, 'Application shutdown')
+        self.log.system(result, APP_SHUTDOWN_MSG)
         return
 
     def validate_args(self):
@@ -309,10 +351,8 @@ class Application(Controller):
         Validates the command line arguments. Raises an exception on failure.
         :raises: ValueError: A command line argument is invalid
         """
-        # Have a problem? Use a regular expression. Now you have two problems!
-        # This regex validates an ISO 8601 date with the format YYYY-MM-DD
-        # Ref: https://stackoverflow.com/questions/22061723/regex-date-validation-for-yyyy-mm-dd
-        date_regex = re.compile('^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$')
+        # Check the -d parameter
+        date_regex = re.compile(REGEX_ISO8601_DATEONLY)
         if self.args.date:
             if not date_regex.match(self.args.date):
                 raise ValueError(EXCEPTION_DATE_INVALID_MSG)
@@ -360,13 +400,17 @@ class Database(Model):
     def validate(self, filename=None):
         """
         Validates today's .CSV file.
-        :return: True or False, depending on if the validation was successful.
+        :return:
+            DB_RESULT_OK
+            DB_RESULT_GENERAL_FAILURE
+            DB_RESULT_BAD_CHECKSUM
+            DB_RESULT_CORRUPT_FILE
         """
         # Figure out the filaname
         if not filename:
             filename = self.todays_filename()
         # Default to success
-        result = True
+        result = DB_RESULT_OK
         try:
             with open(filename, 'r', newline=Database.empty_string) as file:
                 db = csv.reader(file,
@@ -388,12 +432,26 @@ class Database(Model):
                     existing_checksum = int(row[Database.column_checksum])
                     # Fail if any row's checksum does not match
                     if (fresh_checksum != existing_checksum):
-                        result = False
+                        result = DB_RESULT_BAD_CHECKSUM
+                        break
+            # Was there a checksum error?
+            if result == DB_RESULT_BAD_CHECKSUM:
+                self.view.warn(WARNING_DB_VALIDATION.format(filename))
+        except IndexError as e:
+            # This is caused by a corrupt database file. However, in many cases it should be
+            # possible to append data to the file.
+            result = DB_RESULT_CORRUPT_FILE
+            self.view.warn(WARNING_DB_CORRUPTION.format(filename))
+        except PermissionError:
+            # User does not have permission to access the database file
+            result = DB_RESULT_NO_PERMISSION
+            self.view.error(ERROR_DB_PERMISSION.format(filename))
         except:
             # Was an exception thrown?
-            result = False
+            result = DB_RESULT_GENERAL_FAILURE
             e = sys.exc_info()[0]
-            self.log.error(EXCEPTION_GENERAL_MSG.format(e, 'Database.validate()'))
+            self.view.error(EXCEPTION_GENERAL_MSG.format(e, 'Database.validate()'))
+
         return result
 
 
@@ -401,11 +459,15 @@ class Database(Model):
         """
         Creates a database row that's populated with fake personally-identifying data.
         Note that the columns 'unix_time' and 'checksum' will be valid.
-        :return: True or False, depending on if the write is considered successful.
+        :return:
+            DB_RESULT_OK
+            DB_RESULT_GENERAL_FAILURE
+            DB_RESULT_BAD_CHECKSUM
+            DB_RESULT_CORRUPT_FILE
         """
         filename = self.todays_filename()
         # Default to success
-        result = True
+        result = DB_RESULT_OK
         try:
             with open(filename, 'a', newline=Database.empty_string) as file:
                 db = csv.writer(file,
@@ -428,11 +490,15 @@ class Database(Model):
                 db.writerow(row)
             # Re-validate the database after the write
             result = self.validate(filename)
+        except PermissionError:
+            # User does not have permission to access the database file
+            result = DB_RESULT_NO_PERMISSION
+            self.view.error(ERROR_DB_PERMISSION.format(filename))
         except:
-            # Was an exception thrown?
-            result = False
+            # Was any other exception thrown?
+            result = DB_RESULT_GENERAL_FAILURE
             e = sys.exc_info()[0]
-            self.log.error(EXCEPTION_GENERAL_MSG.format(e, 'Database.create_row()'))
+            self.view.error(EXCEPTION_GENERAL_MSG.format(e, 'Database.create_row()'))
         return result
 
 
@@ -570,10 +636,7 @@ class PersonGenerator():
         return result
 
     def __generate_phone_number():
-        # Have a problem? Use a regular expression. Now you have two problems!
-        # This regex validates a 10-digit telephone number
-        # Ref: https://www.oreilly.com/library/view/regular-expressions-cookbook/9781449327453/ch04s02.html
-        nanp_regex = re.compile('^\(?([2-9][0-8][0-9])\)?[-.]?([2-9][0-9]{2})[-.]?([0-9]{4})$')
+        nanp_regex = re.compile(REGEX_PHONE_US10DIGIT)
         # Generate random phone numbers until we get one that's valid according to the NANP
         phone_number_is_invalid = True
         while phone_number_is_invalid:
