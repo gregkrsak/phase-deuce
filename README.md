@@ -4,7 +4,11 @@ Welcome to the daily log.
 
 # How do I use this?
 
-From the command line, type `phase-deuce.py` (or `phase-deuce.py -h` for a list of options) 
+###### Windows
+From the command line, type `phase-deuce.py` (or `phase-deuce.py -h` for a list of options)
+
+###### macOS/Linux
+From the command line, type `./phase-deuce.py` (or `./phase-deuce.py -h` for a list of options)
 
 Note that phase-deuce is a console application, written in Python. That means you'll need to open a terminal window and execute it manually, from the command line. *If you don't already have the Python language installed on your computer, you'll need to install it before this app will work.*
 
