@@ -231,10 +231,10 @@ class Application(Controller):
             self.getch = _find_getch()
             # Initialize the random number generator
             random.seed()
-            # Initialize the primary MVC view
-            self.view = Screen()
+            # Initialize the primary MVC view to be an instance of the Log class
+            self.view = self.log
             # Initialize the primary MVC model
-            self.model = Database(self.log, self.args)
+            self.model = Database(self.view, self.args)
             # Validate the command line arguments
             self.validate_args()
         except SystemExit:
