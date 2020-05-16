@@ -91,7 +91,7 @@ ARG_HELP_DESCRIPTION =  'Welcome to the daily log. {0}'.format(WEB_URL)
 # Used for -d or --date arguments
 ARG_DATE_SHORT = '-d'
 ARG_DATE_LONG = '--date'
-ARG_DATE_DESCRIPTION = 'Today\'s date in ISO 8601 format (YYYY-MM-DD)'
+ARG_DATE_DESCRIPTION = 'The desired logfile date in ISO 8601 format (YYYY-MM-DD)'
 
 # Used for exception handling
 EXCEPTION_GENERAL_MSG = 'Caught exception in {1}: {0}'
