@@ -453,7 +453,7 @@ class Database(Model):
             result = DB_RESULT_NO_PERMISSION
             self.view.error(ERROR_DB_PERMISSION.format(filename))
         except:
-            # Was an exception thrown?
+            # Was any other exception thrown?
             result = DB_RESULT_GENERAL_FAILURE
             e = sys.exc_info()[0]
             self.view.error(EXCEPTION_GENERAL_MSG.format(e, 'Database.validate()'))
