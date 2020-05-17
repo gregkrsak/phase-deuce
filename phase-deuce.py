@@ -464,7 +464,8 @@ class Database(Model):
     def create_row(self):
         """
         Creates a database row that's populated with fake personally-identifying data.
-        Note that the columns 'unix_time' and 'checksum' will be valid.
+        Note that the columns 'unix_time' and 'checksum' will always be valid, even with
+        the -d YYYY-MM-DD argument from the command line.
         :return:
             DB_RESULT_OK
             DB_RESULT_GENERAL_FAILURE
