@@ -138,7 +138,7 @@ REGEX_PHONE_US10DIGIT = '^\(?([2-9][0-8][0-9])\)?[-.]?([2-9][0-9]{2})[-.]?([0-9]
 def init(argv):
     """
     This is the code block that is run on startup.
-    :return: None
+    :return: Will exit with an EXIT_SUCCESS, EXIT_FAILURE_GENERAL, or EXIT_FAILURE_USAGE code.
     """
     app = Application()
     exit_code = app.run()
@@ -148,6 +148,7 @@ def init(argv):
 def detect_os():
     """
     A rudamentary way to detect whether we are on Windows or a non-Windows operating system.
+    :return: OS_WINDOWS or OS_NON_WINDOWS depending on the operating system.
     """
     result = OS_NON_WINDOWS
     try:
@@ -160,7 +161,9 @@ def detect_os():
 def _find_getch():
     """
     Determines the OS-specific function to return a keypress.
+    I am not the author of this function-- See the reference.
     Ref: https://stackoverflow.com/questions/510357/python-read-a-single-character-from-the-user
+    :return: a Function object appropriate to the detected operating system.
     """
     if detect_os() == OS_NON_WINDOWS:
         # POSIX
@@ -230,17 +233,16 @@ class Controller:
 class Application(Controller):
     """
     The primary application code for the phase-deuce program.
-    :return: None
     """
 
     def __init__(self):
         super().__init__()
         self.startup()
-        pass
 
     def startup(self):
         """
         Performs tasks for the Application instance that should happen on startup.
+        :return: None, or will exit with an EXIT_FAILURE_GENERAL, or EXIT_FAILURE_USAGE code.
         """
         # Initialize the internal logger (unrelated to writing to .CSV files)
         self.log = Log(LOG_LEVEL_INFO)
@@ -297,6 +299,7 @@ class Application(Controller):
     def run(self):
         """
         Runs the Application instance.
+        :return: EXIT_SUCCESS
         """
         the_user_still_wants_to_run_this_application = True
         self.log.info(WELCOME_BANNER_LINE1)
@@ -336,6 +339,7 @@ class Application(Controller):
     def shutdown(self):
         """
         Performs tasks for the Application instance that should happen on shutdown.
+        :return: None
         """
         result = True
         try:
@@ -349,6 +353,7 @@ class Application(Controller):
     def validate_args(self):
         """
         Validates the command line arguments. Raises an exception on failure.
+        :return: None
         :raises: ValueError: A command line argument is invalid
         """
         # Check the -d parameter
@@ -356,6 +361,7 @@ class Application(Controller):
         if self.args.date:
             if not date_regex.match(self.args.date):
                 raise ValueError(EXCEPTION_DATE_INVALID_MSG)
+        return
 
 
 class Database(Model):
@@ -503,12 +509,21 @@ class Database(Model):
 
 
 class Screen(View):
+    """
+    An MVC view representing the screen.
+    """
+
     def __init__(self):
         super().__init__()
 
     def update(self):
+        """
+        Sends waiting buffer contents to the screen.
+        :return: None
+        """
         print(self.buffer)
         self.buffer = ''
+        return
 
 
 class Log(Screen):
@@ -530,32 +545,62 @@ class Log(Screen):
         self.level = level
 
     def system(self, status, message):
+        """
+        [OK] or [FAIL] messages.
+        :return: None
+        """
         if self.level <= LOG_LEVEL_SYSTEM:
             if status == True:
                 self.__printlog(self.system_ok_string, message)
             else:
                 self.__printlog(self.system_fail_string, message)
+        return
 
     def debug(self, message):
+        """
+        [DEBUG] messages.
+        :return: None
+        """
         if self.level <= LOG_LEVEL_DEBUG:
             self.__printlog(self.debug_string, message)
+        return
 
     def info(self, message):
+        """
+        [INFO] messages.
+        :return: None
+        """
         if self.level <= LOG_LEVEL_INFO:
             self.__printlog(self.info_string, message)
+        return
 
     def warn(self, message):
+        """
+        [WARN] messages.
+        :return: None
+        """
         if self.level <= LOG_LEVEL_WARN:
             self.__printlog(self.warn_string, message)
+        return
 
     def error(self, message):
+        """
+        [ERROR] messages.
+        :return: None
+        """
         if self.level <= LOG_LEVEL_ERROR:
             self.__printlog(self.error_string, message)
+        return
 
     def __printlog(self, prefix_string, message):
+        """
+        Appends the appropriate log message to the MVC view's buffer, and triggers an update.
+        :return: None
+        """
         self.buffer += self.prefix_braces[0] + prefix_string + self.prefix_braces[1] \
                         + self.prefix_separator + message
         self.update()
+        return
 
 
 ##########################################################################################
@@ -567,6 +612,7 @@ class PersonGenerator():
     """
     This is a static class used to generate pseudo-random "personal info".
     I was pretty tired when I wrote this, so forigve me if it looks like a giant hack.
+    >> (Announcer's voice) 'It looks like a giant hack.' <<
     """
 
     __first_names = ['Robert', 'Shawn', 'William', 'James', 'Oliver', 'Benjamin', \
@@ -587,6 +633,11 @@ class PersonGenerator():
     __email_domains = ['gmail.com', 'outlook.com', 'yahoo.com', 'icloud.com', 'aol.com', 'mail.com']
 
     def new_identity():
+        """
+        Creates a new identity having a name, email address, and phone number.
+        This is the public API interface for the PersonGenerator class.
+        :return: a List object containing [0:name 1:email 2:phone]
+        """
         # Initialize an empty list to store the result
         result = ['', '', '']
         # Calculate the length of the name lists
@@ -607,6 +658,10 @@ class PersonGenerator():
         return result
 
     def __generate_email(first_name, last_name):
+        """
+        Generates a pseudo-random email address.
+        :return: a String object containing an email address.
+        """
         # Email style constants
         STYLE_FIRST_DOT_LAST = 0
         STYLE_LAST_DOT_FIRST = 1
@@ -636,6 +691,10 @@ class PersonGenerator():
         return result
 
     def __generate_phone_number():
+        """
+        Generates a pseudo-random NANP 10-digit phone number.
+        :return: a String object containing a phone nunmber in the format NPA-NXX-XXXX.
+        """
         nanp_regex = re.compile(REGEX_PHONE_US10DIGIT)
         # Generate random phone numbers until we get one that's valid according to the NANP
         phone_number_is_invalid = True
@@ -648,14 +707,29 @@ class PersonGenerator():
         return result
 
     def __generate_npa():
+        """
+        Attempts to generate a pseudo-random NANP NPA (NPA-NXX-XXXX).
+        Note that the number returned by this function may not be valid according to the NANP.
+        :return: an int between 0-999
+        """
         result = random.randrange(0, 1000)
         return result
 
     def __generate_nxx():
+        """
+        Attempts to generate a pseudo-random NANP NXX (NPA-NXX-XXXX).
+        Note that the number returned by this function may not be valid according to the NANP.
+        :return: an int between 0-999
+        """
         result = random.randrange(0, 1000)
         return result
 
     def __generate_xxxx():
+        """
+        Attempts to generate a pseudo-random NANP XXXX (NPA-NXX-XXXX).
+        Note that the number returned by this function may not be valid according to the NANP.
+        :return: an int between 0-9999
+        """
         result = random.randrange(0, 10000)
         return result
 
