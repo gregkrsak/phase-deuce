@@ -268,7 +268,7 @@ class Application(Controller):
             self.view = self.log
             # Initialize the primary MVC model
             self.model = Database(self.view, self.args)
-            # Validate the command line arguments
+            # Validate the command line arguments. May raise a ValueError exception.
             self.validate_args()
         except SystemExit:
             # This exception is thrown by the argument parser
