@@ -1,6 +1,8 @@
 # phase-deuce
 
-Welcome to the daily log.
+Welcome to the daily log. This program was written during the COVID-19 pandemic, as a way to demonstrate that manual "contact tracing" can be spoofed.
+
+The code is cross-platform, and most of it is (I think) written well. Let me know what you think.
 
 # How do I use this?
 
