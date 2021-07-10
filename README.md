@@ -1,5 +1,10 @@
 # phase-deuce
 
+
+
+[![Python](https://img.shields.io/badge/language-python-blue.svg)](https://github.com/gregkrsak/phase-deuce/blob/master/phase-deuce.py)
+
+
 Welcome to the daily log. This program was written during the COVID-19 pandemic, as a way to demonstrate that manual "contact tracing" can be spoofed.
 
 The code is cross-platform, and most of it is (I think) written well. Let me know what you think.
